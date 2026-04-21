@@ -24,6 +24,7 @@ function App() {
   })
 
   const [users, setUsers] = useState([])
+  const [output, setOutput] = useState('')
 
   const ydoc = useMemo(() => new Y.Doc(), [])
   const yText = useMemo(() => ydoc.getText('monaco'), [ydoc])
@@ -46,6 +47,26 @@ function App() {
     const name = e.target.username.value
     setUsername(name)
     window.history.pushState({}, '', `?username=${name}`)
+  }
+
+  // ▶️ Run code
+  const runCode = async () => {
+    if (!editorRef.current) return
+
+    const code = editorRef.current.getValue()
+
+    try {
+      const res = await fetch('http://localhost:3000/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      })
+
+      const data = await res.json()
+      setOutput(data.output || 'No output')
+    } catch (err) {
+      setOutput('Error connecting to server')
+    }
   }
 
   useEffect(() => {
@@ -99,7 +120,7 @@ function App() {
 
   if (!username) {
     return (
-      <main className="h-screen w-full bg-gray-950 flex gap-4 p-4 items-center justify-center">
+      <main className="h-screen w-full bg-gray-950 flex items-center justify-center">
         <form onSubmit={handleJoin} className='flex flex-col gap-4'>
           <input
             type="text"
@@ -118,6 +139,7 @@ function App() {
   return (
     <main className="h-screen w-full bg-gray-950 flex gap-4 p-4">
 
+      {/* Sidebar */}
       <aside className='h-full w-1/4 bg-gray-400 rounded-lg'>
         <h2 className='text-xl font-bold p-4 border-b border-gray-300'>
           Active Users
@@ -136,14 +158,36 @@ function App() {
         </ul>
       </aside>
 
-      <section className='w-3/4 bg-neutral-800 rounded-lg overflow-hidden'>
-        <Editor
-          height="100%"
-          defaultLanguage="javascript"
-          defaultValue="// Write your code here"
-          theme="vs-dark"
-          onMount={handleMount}
-        />
+      {/* Editor + Output */}
+      <section className='w-3/4 bg-neutral-800 rounded-lg overflow-hidden relative flex flex-col'>
+
+        {/* Run Button */}
+        <div className="p-2 flex justify-end bg-neutral-900">
+          <button
+            onClick={runCode}
+            className="bg-green-600 hover:bg-green-700 px-4 py-1 rounded text-white"
+          >
+            ▶ Run
+          </button>
+        </div>
+
+        {/* Editor */}
+        <div className="flex-1">
+          <Editor
+            height="100%"
+            defaultLanguage="javascript"
+            defaultValue="// Write your code here"
+            theme="vs-dark"
+            onMount={handleMount}
+          />
+        </div>
+
+        {/* Output */}
+        <div className="h-40 bg-black text-green-400 p-3 overflow-auto border-t border-gray-700">
+          <div className="text-gray-400 text-sm mb-1">Output:</div>
+          <pre className="text-sm whitespace-pre-wrap">{output}</pre>
+        </div>
+
       </section>
 
     </main>
