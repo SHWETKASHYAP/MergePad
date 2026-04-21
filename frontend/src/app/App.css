@@ -1,1 +1,23 @@
-@import "tailwindcss"
+@import "tailwindcss";
+
+.yRemoteSelection {
+  background-color: rgba(100, 100, 255, 0.3);
+}
+
+.yRemoteSelectionHead {
+  position: absolute;
+  border-left: 2px solid;
+  border-color: inherit;
+}
+
+.yRemoteSelectionHead::after {
+  content: attr(data-username);
+  position: absolute;
+  top: -20px;
+  left: 0;
+  background: inherit;
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
