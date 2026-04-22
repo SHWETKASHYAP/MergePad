@@ -5,6 +5,14 @@ import { useRef, useMemo, useState, useEffect } from 'react'
 import * as Y from 'yjs'
 import { SocketIOProvider } from 'y-socket.io'
 
+const BACKEND_URL = import.meta.env.VITE_API_URL
+
+
+if (!BACKEND_URL) {
+  throw new Error("VITE_API_URL is missing")
+}
+
+
 function getColorFromUsername(username) {
   let hash = 0
   for (let i = 0; i < username.length; i++) {
@@ -13,6 +21,7 @@ function getColorFromUsername(username) {
   const hue = Math.abs(hash % 360)
   return `hsl(${hue}, 70%, 60%)`
 }
+
 
 function App() {
 
@@ -49,22 +58,23 @@ function App() {
     window.history.pushState({}, '', `?username=${name}`)
   }
 
-  // ▶️ Run code
   const runCode = async () => {
     if (!editorRef.current) return
 
     const code = editorRef.current.getValue()
 
+
     try {
-      const res = await fetch('http://localhost:3000/run', {
+      const res = await fetch(`${BACKEND_URL}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ code }),
       })
 
       const data = await res.json()
       setOutput(data.output || 'No output')
     } catch (err) {
+      console.error(err)
       setOutput('Error connecting to server')
     }
   }
@@ -73,7 +83,7 @@ function App() {
     if (!username) return
 
     const provider = new SocketIOProvider(
-      'http://localhost:3000',
+      BACKEND_URL,
       'monaco',
       ydoc,
       { autoConnect: true }
@@ -159,7 +169,7 @@ function App() {
       </aside>
 
       {/* Editor + Output */}
-      <section className='w-3/4 bg-neutral-800 rounded-lg overflow-hidden relative flex flex-col'>
+      <section className='w-3/4 bg-neutral-800 rounded-lg overflow-hidden flex flex-col'>
 
         {/* Run Button */}
         <div className="p-2 flex justify-end bg-neutral-900">
