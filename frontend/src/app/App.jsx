@@ -124,8 +124,14 @@ function App() {
   })
 
   const [hostUsername] = useState(
-  searchParams.get("hostUser") || ""
-)
+    searchParams.get("hostUser") || ""
+  )
+
+  console.log({
+    username,
+    hostUsername,
+    isHost
+  })
 
   const [users, setUsers] = useState([])
   const [output, setOutput] = useState('')
@@ -182,7 +188,8 @@ function App() {
     provider.awareness.setLocalStateField('user', {
       username,
       color: getColorFromUsername(username),
-      clientId: ydoc.clientID
+      clientId: ydoc.clientID,
+      isHost
     })
 
     const updateUsers = () => {
@@ -270,7 +277,7 @@ function App() {
             >
               <span>{user.username}</span>
 
-              {user.username === hostUsername && (
+              {user.isHost && (
                 <span title="Room Creator">
                   👑
                 </span>
