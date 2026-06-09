@@ -1,6 +1,6 @@
 # fly.toml — Fly.io backend config
 app = "mergepad-backend"   # app name
-primary_region = "sin"     # Singapore — closest to India
+primary_region = "bom"     # Bombay
 
 [build]
 
