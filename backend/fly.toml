@@ -1,0 +1,26 @@
+# fly.toml — Fly.io backend config
+app = "mergepad-backend"   # app name
+primary_region = "sin"     # Singapore — closest to India
+
+[build]
+
+[env]
+  PORT = "3000"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = false   # keeps backend alive — no cold starts
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 80
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
