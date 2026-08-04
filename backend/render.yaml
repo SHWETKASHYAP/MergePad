@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: mergepad-backend
+    runtime: node
+    rootDir: backend           # tells Render to look inside /backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false            # you'll set this manually in Render dashboard

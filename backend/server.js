@@ -7,12 +7,14 @@ import cors from 'cors'
 const app = express()
 const httpServer = createServer(app)
 
+// ─── Allowed Origins ─────────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
-  'http://localhost:5173',                        // local dev
-  'http://localhost:5000',                        // local preview
-  process.env.FRONTEND_URL,                       // Vercel URL (set in Fly secrets)
-].filter(Boolean)                                 // removes undefined if env var not set
+  'http://localhost:5173',   // local dev
+  'http://localhost:5000',   // local preview
+  process.env.FRONTEND_URL,  // Vercel URL (set in Render environment variables)
+].filter(Boolean)            // removes undefined if env var not set
 
+// ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(express.json())
 
 app.use(cors({
@@ -20,7 +22,7 @@ app.use(cors({
   methods: ['GET', 'POST'],
 }))
 
-// ─── Socket.IO ──────────────────────────────────────────────────────────────
+// ─── Socket.IO ───────────────────────────────────────────────────────────────
 const io = new Server(httpServer, {
   cors: {
     origin: ALLOWED_ORIGINS,
@@ -32,7 +34,7 @@ const io = new Server(httpServer, {
 const ySocketIO = new YSocketIO(io)
 ySocketIO.initialize()
 
-// ─── Routes ─────────────────────────────────────────────────────────────────
+// ─── Routes ──────────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
   res.status(200).json({ message: 'Server is healthy', success: true })
 })
@@ -63,6 +65,7 @@ app.post('/run', (req, res) => {
   }
 })
 
+// ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
 
 httpServer.listen(PORT, () => {

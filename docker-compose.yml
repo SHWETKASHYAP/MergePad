@@ -1,0 +1,30 @@
+services:
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - FRONTEND_URL=http://localhost:5173
+    volumes:
+      - ./backend:/app          # live reload — code changes reflect instantly
+      - /app/node_modules       # don't overwrite container's node_modules
+    restart: unless-stopped
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host"
+    depends_on:
+      - backend
+    restart: unless-stopped
