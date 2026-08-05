@@ -16,7 +16,7 @@ function App() {
   )
   const [isHost] = useState(searchParams.get('host') === 'true')
 
-  const { providerRef, users, yText } = useCollaboration({
+  const { providerRef, users, yText, updateCursor } = useCollaboration({
     username,
     roomId,
     isHost,
@@ -33,7 +33,13 @@ function App() {
   return (
     <main className="h-screen w-full bg-gray-950 flex gap-4 p-4">
       <Sidebar users={users} roomId={roomId} />
-      <EditorPanel yText={yText} providerRef={providerRef} />
+      <EditorPanel
+        yText={yText}
+        providerRef={providerRef}
+        users={users}
+        updateCursor={updateCursor}
+        currentUsername={username}
+      />
     </main>
   )
 }

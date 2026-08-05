@@ -30,13 +30,20 @@ export function useCollaboration({ username, roomId, isHost }) {
     })
 
     const updateUsers = () => {
-      const states = Array.from(provider.awareness.getStates().values())
+      const states = Array.from(provider.awareness.getStates().entries())
       const uniqueUsers = Array.from(
         new Map(
           states
-            .map((state) => state.user)
-            .filter((user) => user?.username)
-            .map((user) => [user.username, user])
+            .filter(([, state]) => state.user?.username)
+            .map(([clientId, state]) => [
+              state.user.username,
+              {
+                ...state.user,
+                clientId,
+                // include cursor data if available
+                cursor: state.cursor || null,
+              },
+            ])
         ).values()
       )
       setUsers(uniqueUsers)
@@ -57,5 +64,13 @@ export function useCollaboration({ username, roomId, isHost }) {
     }
   }, [username, roomId, ydoc, isHost])
 
-  return { providerRef, users, ydoc, yText }
+  const updateCursor = (position, selection) => {
+    if (!providerRef.current) return
+    providerRef.current.awareness.setLocalStateField('cursor', {
+      position,    // { lineNumber, column }
+      selection,   // { startLineNumber, startColumn, endLineNumber, endColumn }
+    })
+  }
+
+  return { providerRef, users, ydoc, yText, updateCursor }
 }
