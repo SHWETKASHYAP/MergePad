@@ -64,6 +64,8 @@ export function useCollaboration({ username, roomId, isHost }) {
     }
   }, [username, roomId, ydoc, isHost])
 
+
+  // broadcast this user's cursor position whenever it changes via awareness
   const updateCursor = (position, selection) => {
     if (!providerRef.current) return
     providerRef.current.awareness.setLocalStateField('cursor', {
@@ -72,5 +74,8 @@ export function useCollaboration({ username, roomId, isHost }) {
     })
   }
 
-  return { providerRef, users, ydoc, yText, updateCursor }
+  //expose socket so components can listen to events like 'code-output'
+  const getSocket = () => providerRef.current?.awareness?.provider?.socket || null
+
+  return { providerRef, users, ydoc, yText, updateCursor, getSocket }
 }

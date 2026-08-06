@@ -40,7 +40,7 @@ app.get('/health', (req, res) => {
 })
 
 app.post('/run', (req, res) => {
-  const { code } = req.body
+  const { code, roomId, username } = req.body
 
   if (!code) {
     return res.status(400).json({ output: 'No code provided' })
@@ -57,11 +57,32 @@ app.post('/run', (req, res) => {
     eval(code)
 
     console.log = originalLog
-    res.json({ output: output || 'Code executed successfully (no output)' })
+
+    const result = {
+      output: output || 'Code executed successfully (no output)',
+      ranBy: username || 'Someone', //who ran the code
+    }
+
+    //Broadcast output to all users in the room
+    if(roomId){
+      io.to(roomId).emit('code-output',result)
+    }
+
+    res.json(result)
 
   } catch (err) {
     console.log = originalLog
-    res.json({ output: err.message })
+
+    const result = {
+      output: err.message,
+      ranBy: username || 'Someone', 
+    }
+
+    if(roomId){
+      io.to(roomId).emit('code-output',result)
+    }
+
+    res.json({ result })
   }
 })
 

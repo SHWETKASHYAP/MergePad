@@ -16,7 +16,7 @@ function App() {
   )
   const [isHost] = useState(searchParams.get('host') === 'true')
 
-  const { providerRef, users, yText, updateCursor } = useCollaboration({
+  const { providerRef, users, yText, updateCursor, getSocket } = useCollaboration({
     username,
     roomId,
     isHost,
@@ -39,6 +39,8 @@ function App() {
         users={users}
         updateCursor={updateCursor}
         currentUsername={username}
+        roomId={roomId}
+        getSocket={getSocket}
       />
     </main>
   )

@@ -11,6 +11,23 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
   const widgetsRef = useRef({})             // tracks active name widgets by username
   const [output, setOutput] = useState('')
 
+  //Listen for code-output events from the backend and update output state
+  useEffect(() => {
+    const socket = getSocket()
+    if(!socket) return 
+
+    const handleOutput = ({ output, ranBy}) => {
+      setOutput(output)
+      setRanBy(ranBy)
+    }
+
+    socket.on('code-output', handleOutput)
+
+    return () => {
+      socket.off('code-output', handleOutput)
+    }
+  }),[getSocket]
+
   const handleMount = (editor, monaco) => {
     editorRef.current = editor
     monacoRef.current = monaco
@@ -183,17 +200,15 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
     const code = editorRef.current.getValue()
 
     try {
-      const res = await fetch(`${BACKEND_URL}/run`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      })
-
-      const data = await res.json()
-      setOutput(data.output || 'No output')
+        await fetch(`${BACKEND_URL}/run`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, roomId, username: currentUsername }),
+        })
     } catch (err) {
       console.error(err)
       setOutput('Error connecting to server')
+      setRanBy('')
     }
   }
 
@@ -221,9 +236,17 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
         />
       </div>
 
+
       {/* Output */}
       <div className="h-40 bg-black text-green-400 p-3 overflow-auto border-t border-gray-700">
-        <div className="text-gray-400 text-sm mb-1">Output:</div>
+        <div className="text-gray-400 text-sm mb-1">
+          Output:
+          {ranBy && (
+            <span className="ml-2 text-yellow-400 text-xs">
+              ▶ ran by {ranBy}
+            </span>
+          )}
+        </div>
         <pre className="text-sm whitespace-pre-wrap">{output}</pre>
       </div>
 
