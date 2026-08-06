@@ -13,7 +13,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
 
   //Listen for code-output events from the backend and update output state
   useEffect(() => {
-    const socket = getSocket()
+    const socket = getSocket() ? getSocket() : null
     if(!socket) return 
 
     const handleOutput = ({ output, ranBy}) => {
@@ -26,7 +26,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
     return () => {
       socket.off('code-output', handleOutput)
     }
-  }),[getSocket]
+  }),[getSocket,users]
 
   const handleMount = (editor, monaco) => {
     editorRef.current = editor
