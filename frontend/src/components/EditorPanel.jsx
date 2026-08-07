@@ -4,12 +4,13 @@ import { MonacoBinding } from 'y-monaco'
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
-export function EditorPanel({ yText, providerRef, users, updateCursor, currentUsername }) {
+export function EditorPanel({ yText, providerRef, users, updateCursor, currentUsername, roomId, getSocket }) {
   const editorRef = useRef(null)
   const monacoRef = useRef(null)
   const decorationsRef = useRef([])         // tracks active decorations so we can clear them
   const widgetsRef = useRef({})             // tracks active name widgets by username
   const [output, setOutput] = useState('')
+  const [ranBy, setRanBy] = useState('')
 
   //Listen for code-output events from the backend and update output state
   useEffect(() => {
@@ -26,7 +27,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
     return () => {
       socket.off('code-output', handleOutput)
     }
-  }),[getSocket,users]
+  },[getSocket,users])
 
   const handleMount = (editor, monaco) => {
     editorRef.current = editor
