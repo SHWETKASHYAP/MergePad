@@ -15,6 +15,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
   //Listen for code-output events from the backend and update output state
   useEffect(() => {
     const socket = getSocket() ? getSocket() : null
+    console.log('socket :', socket)
     if(!socket) return 
 
     const handleOutput = ({ output, ranBy}) => {
