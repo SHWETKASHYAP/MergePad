@@ -14,8 +14,8 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
 
   //Listen for code-output events from the backend and update output state
   useEffect(() => {
-    const socket = getSocket() ? getSocket() : null
-    console.log('socket :', socket)
+    const socket = getSocket ? getSocket() : null
+
     if(!socket) return 
 
     const handleOutput = ({ output, ranBy}) => {
@@ -69,8 +69,10 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
     const monaco = monacoRef.current
     if (!editor || !monaco) return
 
-    // ── 1. Clear old decorations ──────────────────────────────────────────────
-    decorationsRef.current = editor.deltaDecorations(decorationsRef.current, [])
+    //wrap in requestAnimation frame to avoid recursive deltaDecorations calls 
+    const frameId = requestAnimationFrame(() => {
+      // ── 1. Clear old decorations ──────────────────────────────────────────────
+      decorationsRef.current = editor.deltaDecorations(decorationsRef.current, [])
 
     // ── 2. Remove old name widgets ────────────────────────────────────────────
     Object.values(widgetsRef.current).forEach((widget) => {
@@ -187,6 +189,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
 
     // ── 4. Apply all new decorations at once ─────────────────────────────────
     decorationsRef.current = editor.deltaDecorations([], newDecorations)
+  })
 
     // ── 5. Cleanup widgets on unmount ─────────────────────────────────────────
     return () => {

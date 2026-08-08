@@ -7,14 +7,12 @@ import cors from 'cors'
 const app = express()
 const httpServer = createServer(app)
 
-// ─── Allowed Origins ─────────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
-  'http://localhost:5173',   // local dev
-  'http://localhost:5000',   // local preview
-  process.env.FRONTEND_URL,  // Vercel URL (set in Render environment variables)
+  'http://localhost:5173',   
+  'http://localhost:5000',   
+  process.env.FRONTEND_URL,  
 ].filter(Boolean)            // removes undefined if env var not set
 
-// ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(express.json())
 
 app.use(cors({
@@ -22,7 +20,7 @@ app.use(cors({
   methods: ['GET', 'POST'],
 }))
 
-// ─── Socket.IO ───────────────────────────────────────────────────────────────
+// ----------------- Socket.IO ---------------------------------- 
 const io = new Server(httpServer, {
   cors: {
     origin: ALLOWED_ORIGINS,
@@ -34,7 +32,15 @@ const io = new Server(httpServer, {
 const ySocketIO = new YSocketIO(io)
 ySocketIO.initialize()
 
-// ─── Routes ──────────────────────────────────────────────────────────────────
+//-----------------handle custom socket events -------------------------
+io.on('connection', (socket) => {
+  //Clients joins a room on the custom socket
+  socket.on('join-room', (roomId) => {
+    socket.join(roomId)
+  })
+})
+
+// --------------------------------- Routes --------------------------------------
 app.get('/health', (req, res) => {
   res.status(200).json({ message: 'Server is healthy', success: true })
 })
@@ -86,7 +92,7 @@ app.post('/run', (req, res) => {
   }
 })
 
-// ─── Start ────────────────────────────────────────────────────────────────────
+
 const PORT = process.env.PORT || 3000
 
 httpServer.listen(PORT, () => {

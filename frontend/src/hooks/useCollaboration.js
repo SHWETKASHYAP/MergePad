@@ -1,10 +1,14 @@
 import { useEffect, useRef, useMemo, useState } from 'react'
 import * as Y from 'yjs'
 import { SocketIOProvider } from 'y-socket.io'
+import { io } from 'socket.io-client'
 import { getColorFromUsername } from '../utils/colorUtils'
+
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 export function useCollaboration({ username, roomId, isHost }) {
   const providerRef = useRef(null)
+  const socketRef = useRef(null)
   const [users, setUsers] = useState([])
 
   const ydoc = useMemo(() => new Y.Doc(), [])
@@ -13,8 +17,10 @@ export function useCollaboration({ username, roomId, isHost }) {
   useEffect(() => {
     if (!username || !roomId) return
 
+    //--------Yjs provider ( handles doc sync and awareness )-------------
+
     const provider = new SocketIOProvider(
-      import.meta.env.VITE_API_URL || 'http://localhost:3000',
+      BACKEND_URL,
       roomId,
       ydoc,
       { autoConnect: true }
@@ -52,6 +58,16 @@ export function useCollaboration({ username, roomId, isHost }) {
     updateUsers()
     provider.awareness.on('change', updateUsers)
 
+    // Separate sockets for custom events like 'code-output' that are not handled by y-socket.io
+    const socket = io(BACKEND_URL, { transports: ['websocket', 'polling']})
+    socketRef.current = socket
+
+    //join the room on this socket too so server can emit to it
+    socket.on('connect', () => {
+      socket.emit('join-room', roomId)
+    })
+
+
     const handleBeforeUnload = () => {
       provider.awareness.setLocalStateField('user', null)
     }
@@ -60,6 +76,7 @@ export function useCollaboration({ username, roomId, isHost }) {
 
     return () => {
       provider.destroy()
+      socket.disconnect()
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [username, roomId, ydoc, isHost])
@@ -75,7 +92,7 @@ export function useCollaboration({ username, roomId, isHost }) {
   }
 
   //expose socket so components can listen to events like 'code-output'
-  const getSocket = () => providerRef.current?.awareness?.provider?.socket || null
+  const getSocket = () => socketRef.current
 
   return { providerRef, users, ydoc, yText, updateCursor, getSocket }
 }
