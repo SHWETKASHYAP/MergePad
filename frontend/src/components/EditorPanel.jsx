@@ -71,16 +71,16 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
 
     //wrap in requestAnimation frame to avoid recursive deltaDecorations calls 
     const frameId = requestAnimationFrame(() => {
-      // ── 1. Clear old decorations ──────────────────────────────────────────────
+      // ------------------------------------- 1. Clear old decorations -------------------------------------------------------------------
       decorationsRef.current = editor.deltaDecorations(decorationsRef.current, [])
 
-    // ── 2. Remove old name widgets ────────────────────────────────────────────
+    // --------------------------------------- 2. Remove old name widgets ------------------------------------------------------------------
     Object.values(widgetsRef.current).forEach((widget) => {
       editor.removeContentWidget(widget)
     })
     widgetsRef.current = {}
 
-    // ── 3. Build new decorations + widgets for each remote user ───────────────
+    // --------------------------------------- 3. Build new decorations + widgets for each remote user ---------------------------------------
     const newDecorations = []
 
     users.forEach((user) => {
@@ -92,7 +92,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
       const { position, selection } = user.cursor
       const color = user.color
 
-      // ── Cursor line decoration (the blinking | ) ──────────────────────────
+      // ----------------------------------------- Cursor line decoration (the blinking | ) ---------------------------------------
       // inject a CSS class dynamically per user color
       const cursorClassName = `remote-cursor-${user.username.replace(/\s+/g, '-')}`
       const selectionClassName = `remote-selection-${user.username.replace(/\s+/g, '-')}`
@@ -150,7 +150,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
         })
       }
 
-      // ── Name widget (floating label above cursor) ─────────────────────────
+      // ---------------------------- Name widget (floating label above cursor) --------------------------------------
       const widgetId = `cursor-widget-${user.username}`
 
       const domNode = document.createElement('div')
@@ -187,11 +187,11 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
       widgetsRef.current[user.username] = widget
     })
 
-    // ── 4. Apply all new decorations at once ─────────────────────────────────
+    // ----------------------- 4. Apply all new decorations at once -----------------------------------
     decorationsRef.current = editor.deltaDecorations([], newDecorations)
   })
 
-    // ── 5. Cleanup widgets on unmount ─────────────────────────────────────────
+    // ------------------------ 5. Cleanup widgets on unmount -----------------------------------------
     return () => {
       Object.values(widgetsRef.current).forEach((widget) => {
         editor.removeContentWidget(widget)
