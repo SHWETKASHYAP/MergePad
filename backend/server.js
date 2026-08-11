@@ -78,7 +78,7 @@ app.post('/run', async (req, res) => {
 
     // ── Other languages — use OnlineCompiler API ────────────────────────────
     } else {
-      const response = await fetch('https://api.onlinecompiler.io/api/run-code/', {
+      const response = await fetch('https://api.onlinecompiler.io/api/run-code-sync/', {
         method: 'POST',
         headers: {
           'Authorization': process.env.ONLINE_COMPILER_API_KEY,
