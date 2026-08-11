@@ -4,6 +4,16 @@ import { MonacoBinding } from 'y-monaco'
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
+//language display name -> { monacoId, compilerId }
+const LANGUAGES = [
+  { label: 'JavaScript', monacoId: 'javascript', compilerId: 'javascript' },
+  { label: 'Python',     monacoId: 'python',     compilerId: 'python-3.14' },
+  { label: 'TypeScript', monacoId: 'typescript', compilerId: 'typescript'  },
+  { label: 'C++',        monacoId: 'cpp',         compilerId: 'cpp-g++-15' },
+  { label: 'Java',       monacoId: 'java',        compilerId: 'java-openjdk-25' },
+  { label: 'Go',         monacoId: 'go',          compilerId: 'go-1.26'    },
+]
+
 export function EditorPanel({ yText, providerRef, users, updateCursor, currentUsername, roomId, getSocket }) {
   const editorRef = useRef(null)
   const monacoRef = useRef(null)
@@ -11,6 +21,8 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
   const widgetsRef = useRef({})             // tracks active name widgets by username
   const [output, setOutput] = useState('')
   const [ranBy, setRanBy] = useState('')
+  const [isRunning, setIsRunning] = useState(false)
+  const [selectedLang, setSelectedLang] = useState(LANGUAGES[0])
 
   //Listen for code-output events from the backend and update output state
   useEffect(() => {
@@ -21,6 +33,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
     const handleOutput = ({ output, ranBy}) => {
       setOutput(output)
       setRanBy(ranBy)
+      setIsRunning(false)
     }
 
     socket.on('code-output', handleOutput)
@@ -29,6 +42,24 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
       socket.off('code-output', handleOutput)
     }
   },[getSocket,users])
+
+  //--------------------- Switch monaco language on change in dropdown -----------------------------
+
+  const handleLanguageChange = (e) => {
+
+    const lang = LANGUAGES.find(l => l.compilerId === e.target.value)
+    if(!lang) return
+    setSelectedLang(lang)
+
+    // update Monaco syntax highlighting
+    if (editorRef.current && monacoRef.current) {
+      monacoRef.current.editor.setModelLanguage(
+        editorRef.current.getModel(),
+        lang.monacoId
+      )
+    }
+
+  }
 
   const handleMount = (editor, monaco) => {
     editorRef.current = editor
@@ -193,6 +224,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
 
     // ------------------------ 5. Cleanup widgets on unmount -----------------------------------------
     return () => {
+      cancelAnimationFrame(frameId)
       Object.values(widgetsRef.current).forEach((widget) => {
         editor.removeContentWidget(widget)
       })
@@ -200,7 +232,11 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
   }, [users, currentUsername])
 
   const runCode = async () => {
-    if (!editorRef.current) return
+    if (!editorRef.current || isRunning) return
+
+    setIsRunning(true)
+    setOutput('Running...')
+    setRanBy('')
 
     const code = editorRef.current.getValue()
 
@@ -208,28 +244,50 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
         await fetch(`${BACKEND_URL}/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, roomId, username: currentUsername }),
+          body: JSON.stringify({ code, roomId, username: currentUsername, language: selectedLang.compilerId }),
         })
     } catch (err) {
       console.error(err)
       setOutput('Error connecting to server')
       setRanBy('')
+      setIsRunning(false)
     }
   }
 
   return (
     <section className="w-3/4 bg-neutral-800 rounded-lg overflow-hidden flex flex-col">
-
-      {/* Run Button */}
-      <div className="p-2 flex justify-end bg-neutral-900">
+ 
+      {/* Toolbar */}
+      <div className="p-2 flex justify-between items-center bg-neutral-900">
+ 
+        {/* Language Selector */}
+        <select
+          value={selectedLang.compilerId}
+          onChange={handleLanguageChange}
+          className="bg-neutral-700 text-white text-sm px-3 py-1 rounded border border-neutral-600 focus:outline-none cursor-pointer"
+        >
+          {LANGUAGES.map(lang => (
+            <option key={lang.compilerId} value={lang.compilerId}>
+              {lang.label}
+            </option>
+          ))}
+        </select>
+ 
+        {/* Run Button */}
         <button
           onClick={runCode}
-          className="bg-green-600 hover:bg-green-700 px-4 py-1 rounded text-white"
+          disabled={isRunning}
+          className={`px-4 py-1 rounded text-white text-sm ${
+            isRunning
+              ? 'bg-neutral-600 cursor-not-allowed'
+              : 'bg-green-600 hover:bg-green-700'
+          }`}
         >
-          ▶ Run
+          {isRunning ? '⏳ Running...' : '▶ Run'}
         </button>
+ 
       </div>
-
+ 
       {/* Editor */}
       <div className="flex-1">
         <Editor
@@ -240,8 +298,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
           onMount={handleMount}
         />
       </div>
-
-
+ 
       {/* Output */}
       <div className="h-40 bg-black text-green-400 p-3 overflow-auto border-t border-gray-700">
         <div className="text-gray-400 text-sm mb-1">
@@ -254,7 +311,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
         </div>
         <pre className="text-sm whitespace-pre-wrap">{output}</pre>
       </div>
-
+ 
     </section>
   )
 }

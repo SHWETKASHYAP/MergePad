@@ -46,49 +46,93 @@ app.get('/health', (req, res) => {
 })
 
 app.post('/run', (req, res) => {
-  const { code, roomId, username } = req.body
+  const { code, roomId, username, language } = req.body
 
   if (!code) {
     return res.status(400).json({ output: 'No code provided' })
   }
 
-  let output = ''
-  const originalLog = console.log
+  let result
 
   try {
-    console.log = (...args) => {
-      output += args.join(' ') + '\n'
+
+    //---- Run locally with eval() for JavaScript----------------------
+
+    if(!language || language === 'javascript'){
+      let output = ''
+
+      const originalLog = console.log
+
+      console.log = (...args) => {
+        output += args.join(' ')+ '\n'
+      }
+
+      try {
+        eval(code)
+        console.log = originalLog
+        result = {
+          output: output || 'Code executed successfully (no output)',
+          ranBy: username || 'Someone',
+        }
+
+      }catch (err) {
+        console.log = originalLog
+        result = {
+          output: err.message,
+          ranBy: username || 'Someone',
+        }
+      }
+
     }
 
-    eval(code)
+    //----------------------- For other languages use OnlineCompiler API -------------------------------
 
-    console.log = originalLog
+    else {
 
-    const result = {
-      output: output || 'Code executed successfully (no output)',
-      ranBy: username || 'Someone', //who ran the code
+      const response = await fetch('https://api.onlinecompiler.io/api/run-code/', {
+        method: 'POST',
+        headers: {
+          'Authorization': process.env.ONLINE_COMPILER_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          compiler: language,
+          code,
+          input: '',
+        }),
+      })
+
+      const data = await response.json()
+
+      const output = data.output || data.error || 'No output'
+
+      result = {
+        output,
+        ranBy: username || 'Someone',
+      }
     }
 
-    //Broadcast output to all users in the room
-    if(roomId){
-      io.to(roomId).emit('code-output',result)
+    //-------------------------------- Broadcast output to all users in the room -------------------------------
+
+    if(roomId) {
+      io.to(roomId).emit('code-output', result)
     }
 
     res.json(result)
 
   } catch (err) {
-    console.log = originalLog
 
-    const result = {
-      output: err.message,
-      ranBy: username || 'Someone', 
+    result = {
+      output: `Error: ${err.message}`,
+      ranBy: username || 'Someone',
     }
 
-    if(roomId){
-      io.to(roomId).emit('code-output',result)
+    if(roomId) {
+      io.to(roomId).emit('code-output', result)
     }
 
-    res.json({ result })
+    res.json(result)
+
   }
 })
 
