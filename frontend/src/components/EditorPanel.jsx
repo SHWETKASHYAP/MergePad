@@ -8,9 +8,9 @@ const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const LANGUAGES = [
   { label: 'JavaScript', monacoId: 'javascript', compilerId: 'javascript' },
   { label: 'Python',     monacoId: 'python',     compilerId: 'python-3.14' },
-  { label: 'TypeScript', monacoId: 'typescript', compilerId: 'typescript'  },
-  { label: 'C++',        monacoId: 'cpp',         compilerId: 'cpp-g++-15' },
-  { label: 'Java',       monacoId: 'java',        compilerId: 'java-openjdk-25' },
+  { label: 'TypeScript', monacoId: 'typescript', compilerId: 'typescript-deno'  },
+  { label: 'C++',        monacoId: 'cpp',         compilerId: 'g++-15' },
+  { label: 'Java',       monacoId: 'java',        compilerId: 'openjdk-25' },
   { label: 'Go',         monacoId: 'go',          compilerId: 'go-1.26'    },
 ]
 
