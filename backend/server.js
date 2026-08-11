@@ -93,7 +93,8 @@ app.post('/run', async (req, res) => {
 
       const data = await response.json()
 
-      const output = data.output || data.error || 'No output'
+      console.log("OnlineCompiler raw:", JSON.stringify(data))
+      const output = data.output || data.stdout || data.stderr || data.error || JSON.stringify(data)
       result = {
         output,
         ranBy: username || 'Someone',
