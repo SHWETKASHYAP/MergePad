@@ -81,7 +81,7 @@ app.post('/run', async (req, res) => {
       const response = await fetch('https://api.onlinecompiler.io/api/run-code-sync/', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.ONLINE_COMPILER_API_KEY}`,
+          'Authorization': process.env.ONLINE_COMPILER_API_KEY,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
