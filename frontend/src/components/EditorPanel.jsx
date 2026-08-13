@@ -250,7 +250,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
         await fetch(`${BACKEND_URL}/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, roomId, username: currentUsername, language: selectedLang.compilerId,input: input }),
+          body: JSON.stringify({ code, roomId, username: currentUsername, language: selectedLang.compilerId,input: stdin }),
         })
     } catch (err) {
       console.error(err)
