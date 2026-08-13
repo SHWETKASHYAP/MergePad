@@ -23,6 +23,10 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
   const [ranBy, setRanBy] = useState('')
   const [isRunning, setIsRunning] = useState(false)
   const [selectedLang, setSelectedLang] = useState(LANGUAGES[0])
+  const [stdin, setStdin] = useState('')
+  const [showStdin, setShowStdin] = useState(false)
+
+  const isJS = selectedLang.compilerId === 'javascript'
 
   //Listen for code-output events from the backend and update output state
   useEffect(() => {
@@ -50,6 +54,8 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
     const lang = LANGUAGES.find(l => l.compilerId === e.target.value)
     if(!lang) return
     setSelectedLang(lang)
+    setShowStdin(false)   // collapse stdin when switching language
+    setStdin('')
 
     // update Monaco syntax highlighting
     if (editorRef.current && monacoRef.current) {
@@ -244,7 +250,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
         await fetch(`${BACKEND_URL}/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, roomId, username: currentUsername, language: selectedLang.compilerId }),
+          body: JSON.stringify({ code, roomId, username: currentUsername, language: selectedLang.compilerId,input: input }),
         })
     } catch (err) {
       console.error(err)
@@ -257,21 +263,38 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
   return (
     <section className="w-3/4 bg-neutral-800 rounded-lg overflow-hidden flex flex-col">
  
-      {/* Toolbar */}
+      {/* ── Toolbar ── */}
       <div className="p-2 flex justify-between items-center bg-neutral-900">
  
-        {/* Language Selector */}
-        <select
-          value={selectedLang.compilerId}
-          onChange={handleLanguageChange}
-          className="bg-neutral-700 text-white text-sm px-3 py-1 rounded border border-neutral-600 focus:outline-none cursor-pointer"
-        >
-          {LANGUAGES.map(lang => (
-            <option key={lang.compilerId} value={lang.compilerId}>
-              {lang.label}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          {/* Language Selector */}
+          <select
+            value={selectedLang.compilerId}
+            onChange={handleLanguageChange}
+            className="bg-neutral-700 text-white text-sm px-3 py-1 rounded border border-neutral-600 focus:outline-none cursor-pointer"
+          >
+            {LANGUAGES.map(lang => (
+              <option key={lang.compilerId} value={lang.compilerId}>
+                {lang.label}
+              </option>
+            ))}
+          </select>
+ 
+          {/* Stdin toggle — only for non-JS languages */}
+          {!isJS && (
+            <button
+              onClick={() => setShowStdin(prev => !prev)}
+              className={`text-xs px-2 py-1 rounded border transition-colors ${
+                showStdin
+                  ? 'bg-neutral-500 border-neutral-400 text-white'
+                  : 'bg-transparent border-neutral-600 text-neutral-400 hover:text-white hover:border-neutral-400'
+              }`}
+              title="Toggle stdin input"
+            >
+              stdin {showStdin ? '▲' : '▼'}
+            </button>
+          )}
+        </div>
  
         {/* Run Button */}
         <button
@@ -288,7 +311,21 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
  
       </div>
  
-      {/* Editor */}
+      {/* ── Stdin Input — collapsible, only for non-JS ── */}
+      {!isJS && showStdin && (
+        <div className="bg-neutral-900 border-t border-neutral-700 px-3 py-2">
+          <div className="text-neutral-400 text-xs mb-1">stdin (one value per line)</div>
+          <textarea
+            value={stdin}
+            onChange={e => setStdin(e.target.value)}
+            placeholder="Enter input here..."
+            rows={3}
+            className="w-full bg-neutral-800 text-white text-sm font-mono px-2 py-1 rounded border border-neutral-600 focus:outline-none resize-none placeholder-neutral-600"
+          />
+        </div>
+      )}
+ 
+      {/* ── Editor ── */}
       <div className="flex-1">
         <Editor
           height="100%"
@@ -299,7 +336,7 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
         />
       </div>
  
-      {/* Output */}
+      {/* ── Output ── */}
       <div className="h-40 bg-black text-green-400 p-3 overflow-auto border-t border-gray-700">
         <div className="text-gray-400 text-sm mb-1">
           Output:
