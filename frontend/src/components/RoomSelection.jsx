@@ -46,6 +46,7 @@ export function RoomSelection({ setUsername, setRoomId }) {
             src="/MergePad_logo.png"
             alt="MergePad Logo"
             className="w-56 mx-auto mb-2"
+            style={{ mixBlendMode: "screen" }}
           />
           <p className="text-gray-400 text-sm">Real-time collaborative code editor</p>
         </div>
