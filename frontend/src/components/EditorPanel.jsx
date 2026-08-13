@@ -282,7 +282,8 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
  
           {/* Stdin toggle — only for non-JS languages */}
           {!isJS && (
-            <button
+            <div className="flex items-center gap-2">
+              <button
               onClick={() => setShowStdin(prev => !prev)}
               className={`text-xs px-2 py-1 rounded border transition-colors ${
                 showStdin
@@ -293,6 +294,8 @@ export function EditorPanel({ yText, providerRef, users, updateCursor, currentUs
             >
               stdin {showStdin ? '▲' : '▼'}
             </button>
+            <span className="text-xs text-yellow-500">⚠ stdin may not work on free tier</span>
+            </div>
           )}
         </div>
  
