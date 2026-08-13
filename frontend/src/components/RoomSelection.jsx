@@ -51,7 +51,7 @@ export function RoomSelection({ setUsername, setRoomId }) {
       <div className="w-full max-w-md relative z-10">
 
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 bo ">
           <img
             src="/MergePad_logo.png"
             alt="MergePad Logo"
